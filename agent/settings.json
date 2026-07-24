@@ -1,0 +1,7 @@
+{
+  "lastChangelogVersion": "0.82.0",
+  "theme": "dracula",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-sol",
+  "defaultThinkingLevel": "medium"
+}

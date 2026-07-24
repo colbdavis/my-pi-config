@@ -1,0 +1,27 @@
+# Authentication, secrets, and private configuration
+agent/auth.json
+agent/trust.json
+agent/extensions/summaries/config.private.json
+agent/extensions/summaries/config.private.json.*.tmp
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Session and generated runtime state
+agent/sessions/
+agent/workflows/
+agent/models-store.json
+agent/bin/
+
+# Dependencies
+node_modules/
+
+# Logs and temporary/editor files
+*.log
+*.tmp
+*.swp
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,59 @@
+diff --git a/extensions/visual-tools/tools/_common.ts b/extensions/visual-tools/tools/_common.ts
+index 2ba3ae5..d86570e 100644
+--- a/extensions/visual-tools/tools/_common.ts
++++ b/extensions/visual-tools/tools/_common.ts
+@@ -131,8 +131,8 @@ export function snippetAround(content: string, index: number, contextLines = 3):
+ }
+ 
+ /** Copy a rendered PNG into <cwd>/viz with a unique, slugified name. */
+-export function publish(pngPath: string, slug: string): { filename: string; path: string } {
+-  const filesDir = join(process.cwd(), FILES_DIRNAME)
++export function publish(pngPath: string, slug: string, cwd = process.cwd()): { filename: string; path: string } {
++  const filesDir = join(cwd, FILES_DIRNAME)
+   mkdirSync(filesDir, { recursive: true })
+   const clean =
+     slug
+diff --git a/extensions/visual-tools/tools/mermaid_tools.ts b/extensions/visual-tools/tools/mermaid_tools.ts
+index 318aa81..bd4dc4a 100644
+--- a/extensions/visual-tools/tools/mermaid_tools.ts
++++ b/extensions/visual-tools/tools/mermaid_tools.ts
+@@ -137,7 +137,7 @@ export default function mermaidToolsExtension(pi: ExtensionAPI) {
+         }),
+       ),
+     }),
+-    async execute(_id, params) {
++    async execute(_id, params, _signal, _update, ctx) {
+       if (!session || !existsSync(session.bodyPath)) {
+         throw new Error("render_mermaid: no source yet — call write_mermaid first.")
+       }
+@@ -177,7 +177,7 @@ export default function mermaidToolsExtension(pi: ExtensionAPI) {
+       const content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }> = []
+ 
+       if (params.save_as) {
+-        const { filename, path } = publish(outPath, String(params.save_as))
++        const { filename, path } = publish(outPath, String(params.save_as), ctx.cwd)
+         content.push({
+           type: "text",
+           text: `Published to viz/.\nfilename: ${filename}\npath: ${path}\n\nLOOK at the diagram below to confirm it is correct before returning it.`,
+diff --git a/extensions/visual-tools/tools/svg_tools.ts b/extensions/visual-tools/tools/svg_tools.ts
+index 22fdbcb..ae966af 100644
+--- a/extensions/visual-tools/tools/svg_tools.ts
++++ b/extensions/visual-tools/tools/svg_tools.ts
+@@ -144,7 +144,7 @@ export default function svgToolsExtension(pi: ExtensionAPI) {
+         }),
+       ),
+     }),
+-    async execute(_id, params) {
++    async execute(_id, params, _signal, _update, ctx) {
+       if (!session || !existsSync(session.bodyPath)) {
+         throw new Error("render_svg: no source yet — call write_svg first.")
+       }
+@@ -172,7 +172,7 @@ export default function svgToolsExtension(pi: ExtensionAPI) {
+       const content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }> = []
+ 
+       if (params.save_as) {
+-        const { filename, path } = publish(outPath, String(params.save_as))
++        const { filename, path } = publish(outPath, String(params.save_as), ctx.cwd)
+         content.push({
+           type: "text",
+           text: `Published to viz/.\nfilename: ${filename}\npath: ${path}\n\nLOOK at the picture below to confirm the geometry is correct before returning it.`,

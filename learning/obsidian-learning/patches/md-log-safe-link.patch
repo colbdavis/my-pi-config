@@ -1,0 +1,48 @@
+diff --git a/extensions/md-log.ts b/extensions/md-log.ts
+index 55a3489..55f2421 100644
+--- a/extensions/md-log.ts
++++ b/extensions/md-log.ts
+@@ -31,6 +31,18 @@ import * as path from "node:path";
+ 
+ const QA_TOOLS = new Set(["quiz", "ask_user_question"]);
+ 
++// [obsidian-learning patch] helpers — see obsidian-learning/docs/UPSTREAM-PATCHES.md
++function leadingFrontmatter(text: string): string {
++	const m = /^---\r?\n[\s\S]*?\r?\n---\r?\n/.exec(text);
++	return m ? m[0] + "\n" : "";
++}
++function isLinkableTarget(text: string): boolean {
++	const body = text.slice(leadingFrontmatter(text).trimEnd().length).trim();
++	if (body.length === 0) return true; // empty note (frontmatter allowed)
++	if (/^type:\s*learning-transcript\s*$/m.test(leadingFrontmatter(text))) return true;
++	return body.startsWith("> [!quote] YOU") || body.startsWith("> [!abstract] PI");
++}
++
+ export default function mdLog(pi: ExtensionAPI) {
+ 	let logFile: string | null = null;
+ 
+@@ -304,6 +316,13 @@ export default function mdLog(pi: ExtensionAPI) {
+ 				ctx.ui.notify(`Not a file: ${resolved}`, "error");
+ 				return;
+ 			}
++			// [obsidian-learning patch] Linking backfills by REWRITING the file. Refuse
++			// to link a non-empty note that is not already a session transcript, so an
++			// existing atomic/source note can never be overwritten by a mistyped path.
++			if (!isLinkableTarget(fs.readFileSync(resolved, "utf-8"))) {
++				ctx.ui.notify(`Refusing to link: ${path.basename(resolved)} is a non-empty note, not a transcript (md-log would overwrite it). Link an empty note or use /learn-session.`, "error");
++				return;
++			}
+ 
+ 			logFile = resolved;
+ 			pi.appendEntry("md-log", { file: resolved });
+@@ -433,7 +452,9 @@ export default function mdLog(pi: ExtensionAPI) {
+ 
+ 		if (blocks.length > 0) {
+ 			try {
+-				fs.writeFileSync(logFile, blocks.join("\n\n") + "\n", "utf-8");
++				// [obsidian-learning patch] keep the transcript's YAML frontmatter on backfill.
++				const header = leadingFrontmatter(fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf-8") : "");
++				fs.writeFileSync(logFile, header + blocks.join("\n\n") + "\n", "utf-8");
+ 			} catch {
+ 				// ignore
+ 			}

@@ -2,6 +2,19 @@
   "lastChangelogVersion": "0.82.0",
   "theme": "dracula",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6-astra",
-  "defaultThinkingLevel": "minimal"
+  "defaultModel": "gpt-6.1-sol",
+  "defaultThinkingLevel": "minimal",
+  "packages": [
+    "../learning/obsidian-learning"
+  ],
+  "extensions": [
+    "../learning/.pi/extensions/ask-user-question.ts",
+    "../learning/.pi/extensions/quiz.ts",
+    "../learning/.pi/extensions/md-log.ts",
+    "../learning/.pi/extensions/visual-tools"
+  ],
+  "skills": [
+    "../learning/.pi/skills/teach",
+    "../learning/.pi/skills/visualize"
+  ]
 }

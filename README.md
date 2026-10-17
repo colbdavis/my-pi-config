@@ -8,11 +8,20 @@ Personal configuration for the [pi coding agent](https://pi.dev), focused on cod
 - Coding and security-focused global instructions
 - Reusable prompts for explanations, labs, crypto, and security review
 - Skills for background terminals, subagents, crypto CTFs, cybersecurity study, and IT concepts
+- Global teaching, quizzes, visualizations and Obsidian learning/review integration
 - Extensions for user questions, background terminals, file search, git/model information, subagents, summaries, UI customization, and workflows
 
 ## Extension attribution
 
-The extensions in this repository are from **[davis7dotsh/my-pi-setup](https://github.com/davis7dotsh/my-pi-setup)**. This repository packages those extensions with my own pi settings, instructions, prompts, skills, and theme selection.
+The original coding extensions in `agent/extensions/` are from **[davis7dotsh/my-pi-setup](https://github.com/davis7dotsh/my-pi-setup)**. This repository packages those extensions with my own pi settings, instructions, prompts, skills, and theme selection.
+
+The teaching system in `learning/.pi/` is by **[Eero Alvar
+(`amosblomqvist`)](https://github.com/amosblomqvist)**, from
+**[amosblomqvist/learn](https://github.com/amosblomqvist/learn)** at commit
+`7cfd8942f82ab9476e63572387e1fe9bcea5082c`. It supplies the teach/visualize skills,
+quiz and question dialogs, Markdown logging, visual tools and agent prompts.
+The Obsidian adapter in `learning/obsidian-learning/` adds vault retrieval,
+review tracking and approved note edits. See [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Install
 
@@ -21,7 +30,9 @@ Back up your existing pi configuration first, then clone and copy the configurat
 ```sh
 git clone https://github.com/colbdavis/my-pi-config.git
 cd my-pi-config
+mkdir -p ~/.pi/agent ~/.pi/learning
 cp -a agent/. ~/.pi/agent/
+cp -a learning/. ~/.pi/learning/
 cd ~/.pi/agent
 npm install
 for directory in extensions/*; do
@@ -36,6 +47,15 @@ git clone https://codeberg.org/colbdavis/my-pi-config.git
 ```
 
 Pi loads the extensions, skills, prompts, theme, and `AGENTS.md` on its next start.
+Learning paths in `agent/settings.json` resolve relative to `~/.pi/agent/`.
+Configure your vault separately as described in
+[the learning guide](learning/obsidian-learning/README.md); personal vault paths
+and contents are not included.
+
+With a configured vault and the default `strictBash: true`, the learning guard
+disables model-driven shell, background launches and workflows globally.
+Tutoring instructions also apply globally. See the learning guide for trusted
+execution and removal options.
 
 ## Privacy
 

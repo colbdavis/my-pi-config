@@ -1,0 +1,28 @@
+{
+  "name": "obsidian-learning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Obsidian vault integration for Eero Alvar's pi learning system: retrieval, learning state, spaced review, safe note edits.",
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./extension/index.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.ts",
+    "test:unit": "node --test test/unit-*.test.ts",
+    "test:e2e": "node --test --test-concurrency=1 test/e2e-*.test.ts",
+    "check": "node scripts/check.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  }
+}

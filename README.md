@@ -52,10 +52,13 @@ Configure your vault separately as described in
 [the learning guide](learning/obsidian-learning/README.md); personal vault paths
 and contents are not included.
 
-With a configured vault and the default `strictBash: true`, the learning guard
-disables model-driven shell, background launches and workflows globally.
-Tutoring instructions also apply globally. See the learning guide for trusted
-execution and removal options.
+Coding is enabled by default in every session. Use `/coding off` to enable
+learning mode, `/coding on` to return to coding, or `/coding` to toggle.
+The switch applies to the current session; restarting or reloading defaults to coding.
+Learning mode adds tutoring instructions and, with a configured vault and
+`strictBash: true`, disables model-driven shell, background launches and workflows.
+Coding mode keeps vault access checks but permits general code execution.
+See the learning guide for details.
 
 ## Privacy
 

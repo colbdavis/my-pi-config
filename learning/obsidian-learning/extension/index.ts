@@ -105,6 +105,8 @@ export default function obsidianLearning(pi: ExtensionAPI) {
 	const grants: SessionGrants = emptyGrants();
 	const proposals = new Map<string, Proposal>();
 	let mode: TutorMode = "socratic";
+	let codingEnabled = true;
+	const suppressedTools = new Set<string>();
 	let activeTranscript: string | null = null;
 	let sessionSummary: string | null = null;
 	const assessmentsThisSession: string[] = [];
@@ -162,6 +164,42 @@ export default function obsidianLearning(pi: ExtensionAPI) {
 		}
 	}
 
+	function applyCodingMode(ctx: ExtensionContext) {
+		const active = pi.getActiveTools();
+		const available = new Set(pi.getAllTools().map((tool) => tool.name));
+		const next = new Set(active);
+		for (const tool of suppressedTools) {
+			if (available.has(tool)) next.add(tool);
+		}
+		suppressedTools.clear();
+		if (!codingEnabled) {
+			const blocked = new Set<string>();
+			if (next.has("ask_user_question")) blocked.add("ask_user");
+			if (tryEnsure()?.cfg.strictBash) {
+				for (const tool of ["bash", "bg_start", "workflow"]) blocked.add(tool);
+			}
+			for (const tool of blocked) {
+				if (next.delete(tool)) suppressedTools.add(tool);
+			}
+		}
+		pi.setActiveTools([...next]);
+		ctx.ui.setStatus("pi-mode", codingEnabled ? "Coding" : "Learning");
+	}
+
+	pi.registerCommand("coding", {
+		description: "Toggle coding mode (default on): /coding [on|off]",
+		handler: async (args, ctx) => {
+			const value = args.trim().toLowerCase();
+			if (value && value !== "on" && value !== "off") {
+				return ctx.ui.notify("Usage: /coding [on|off]", "warning");
+			}
+			if (!ctx.isIdle()) return ctx.ui.notify("Wait for the current response to finish before switching modes.", "warning");
+			codingEnabled = value ? value === "on" : !codingEnabled;
+			applyCodingMode(ctx);
+			ctx.ui.notify(codingEnabled ? "Coding enabled." : "Learning mode enabled.", "info");
+		},
+	});
+
 	// ── Lifecycle ────────────────────────────────────────────────────────────
 
 	pi.on("session_start", async (_event, ctx) => {
@@ -184,19 +222,13 @@ export default function obsidianLearning(pi: ExtensionAPI) {
 			if (e.customType === "obsidian-learning-grant" && e.data?.prefix) grants.gated.add(e.data.prefix);
 			if (e.customType === "obsidian-learning-assessment" && e.data?.file) assessmentsThisSession.push(e.data.file);
 		}
-		const s = tryEnsure();
-		// Eero's README: popups must use the shared-lock implementation. The global
-		// `ask_user` tool does not take the lock, so it is deactivated in learning
-		// sessions only (runtime, this project; global settings untouched).
-		const active = pi.getActiveTools();
-		let next = active;
-		if (active.includes("ask_user_question") && active.includes("ask_user")) next = next.filter((t) => t !== "ask_user");
-		if (s?.cfg.strictBash) next = next.filter((t) => t !== "bash" && t !== "bg_start" && t !== "workflow");
-		if (next.length !== active.length) pi.setActiveTools(next);
+		codingEnabled = true;
+		applyCodingMode(ctx);
 		updateStatus(ctx);
 	});
 
 	pi.on("before_agent_start", async (event) => {
+		if (codingEnabled) return;
 		const s = tryEnsure();
 		let overlay: string;
 		if (!s) overlay = buildOverlay({ vaultReady: false, vaultProblem: cfgError ?? undefined, initialized: false, mode });
@@ -223,7 +255,7 @@ export default function obsidianLearning(pi: ExtensionAPI) {
 		if (!vault && !tryEnsure()) return; // no vault configured → nothing to protect
 		const v = vault!;
 		try {
-			const d = checkToolCall({ cfg: v.cfg, vaultRoot: v.root, vaultRootRaw: v.rootRaw, cwd: ctx.cwd, grants }, event.toolName, event.input);
+			const d = checkToolCall({ cfg: { ...v.cfg, strictBash: !codingEnabled && v.cfg.strictBash }, vaultRoot: v.root, vaultRootRaw: v.rootRaw, cwd: ctx.cwd, grants }, event.toolName, event.input);
 			if (d.block) return { block: true, reason: d.reason };
 		} catch {
 			// Fail closed only for calls that mention the vault; never take all tools down.
@@ -740,7 +772,7 @@ export default function obsidianLearning(pi: ExtensionAPI) {
 				agentsDir: c.agents.agentsDir ?? defaultAgentsDir(),
 				researcherHarness: c.agents.researcherHarness,
 			});
-			if (c.strictBash && brief.args.harness !== "pi") {
+			if (!codingEnabled && c.strictBash && brief.args.harness !== "pi") {
 				return text("Research harness disabled by strictBash: the installed Codex/Claude child harnesses do not enforce this vault guard. Use known sources, or explicitly set strictBash=false before trusted external research.");
 			}
 			return text(
@@ -787,7 +819,7 @@ export default function obsidianLearning(pi: ExtensionAPI) {
 			for (const n of readable) byKind.set(n.kind, (byKind.get(n.kind) ?? 0) + 1);
 			const lines = [
 				`Vault: ${s.vault.root}`,
-				`Config: ${s.cfg.source.join(", ") || "(defaults)"} · timezone ${s.cfg.timezone} · mode ${mode}${s.cfg.strictBash ? " · strictBash" : ""}`,
+				`Config: ${s.cfg.source.join(", ") || "(defaults)"} · timezone ${s.cfg.timezone} · mode ${codingEnabled ? "coding" : "learning"} · tutor ${mode}${s.cfg.strictBash ? " · strictBash" : ""}`,
 				`Notes: ${readable.length} readable / ${all.length} total (${all.length - readable.length} excluded or gated)`,
 				`By kind: ${[...byKind.entries()].map(([k, v]) => `${k} ${v}`).join(", ")}`,
 				`Learning dir: ${s.store.isInitialized() ? "initialized" : "NOT initialized (/learn-init)"}`,

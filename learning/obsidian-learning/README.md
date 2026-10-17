@@ -121,12 +121,16 @@ No daemon is installed and no retention guarantee is implied.
   Markdown or write files in the vault; allowed attachments can be viewed.
   Backups must be outside the vault. Approved writes recheck policy and source
   hashes, preserve unrelated bytes, then write atomically.
-- With global installation, tutoring instructions and vault guards apply in every
-  Pi session, including coding projects. Strict mode disables model-driven bash, background shell launches, workflows
+- Coding is enabled by default. Use `/coding off` for learning mode,
+  `/coding on` for coding, or `/coding` to toggle. The switch lasts until restart
+  or reload. Tutoring instructions apply only in learning mode; vault access
+  checks remain active in both modes. Coding allows general shell execution
+  (the shell marker guard is best effort, not a sandbox).
+  In learning mode, `strictBash: true` disables model-driven bash, background shell launches, workflows
   and external child harnesses. Pi children are limited to maker workspaces with
   restricted role tools. The global `ask_user` remains installed but is inactive
   in learning sessions so upstream question/quiz/approval popups share one lock.
-- Set `strictBash: false` only for trusted execution when you need program runs
+- Within learning mode, set `strictBash: false` only for trusted execution when you need program runs
   or external researcher harnesses. The existing Codex child backend explicitly
   uses `danger-full-access` and `approvalPolicy: never`; its calls bypass this
   vault guard. The shell marker guard in this mode is best effort, not a sandbox.

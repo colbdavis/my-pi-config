@@ -48,10 +48,16 @@ export async function openSession(tv, opts = {}) {
     }),
   };
   await session.bindExtensions({ ...(opts.hasUI === false ? {} : { uiContext: ui, mode: 'tui' }), onError: e => errors.push(e) });
+  // Existing workflow tests exercise the opt-in learning mode.
+  if (!opts.coding) await session.prompt('/coding off');
   return {
     session, faux, loader, screens, errors,
     async run(prompt, responses) {
-      faux.setResponses([...responses, ai.fauxAssistantMessage('Fine.')]);
+      // Newer Pi providers receive transcript contexts without systemPrompt.
+      const steps = responses.map(step => typeof step === 'function'
+        ? (context, ...args) => step({ ...context, systemPrompt: session.systemPrompt }, ...args)
+        : step);
+      faux.setResponses([...steps, ai.fauxAssistantMessage('Fine.')]);
       const before = session.messages.length;
       await session.prompt(prompt);
       const messages = session.messages.slice(before);
